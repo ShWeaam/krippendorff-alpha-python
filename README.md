@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/krippendorff-alpha.svg)](https://badge.fury.io/py/krippendorff-alpha)
 [![Python versions](https://img.shields.io/pypi/pyversions/krippendorff-alpha.svg)](https://pypi.org/project/krippendorff-alpha/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://github.com/ShWeaam/krippendorff_alpha_calculator/workflows/Tests/badge.svg)](https://github.com/ShWeaam/krippendorff_alpha_calculator/actions)
+[![Tests](https://github.com/ShWeaam/krippendorff-alpha-python/workflows/Tests/badge.svg)](https://github.com/ShWeaam/krippendorff-alpha-python/actions)
 
 **The most comprehensive and theoretically accurate implementation of Krippendorff's Alpha for inter-rater reliability in Python.**
 
@@ -262,8 +262,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ### Development Setup
 
 ```bash
-git clone https://github.com/ShWeaam/krippendorff_alpha_calculator.git
-cd krippendorff_alpha_calculator
+git clone https://github.com/ShWeaam/krippendorff-alpha-python.git
+cd krippendorff-alpha-python
 pip install -e \".[dev]\"
 pytest  # run tests
 ```
@@ -284,7 +284,7 @@ If you use this package in academic research, please cite:
   title = {Krippendorff's Alpha for Python: Comprehensive Inter-Rater Reliability},
   author = {Weaam Shaheen},
   year = {2025},
-  url = {https://github.com/ShWeaam/krippendorff_alpha_calculator},
+  url = {https://github.com/ShWeaam/krippendorff-alpha-python},
   note = {Python package for calculating Krippendorff's Alpha coefficient}
 }
 ```
@@ -313,8 +313,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **📋 Issues**: [GitHub Issues](https://github.com/ShWeaam/krippendorff_alpha_calculator/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/ShWeaam/krippendorff_alpha_calculator/discussions)  
+- **📋 Issues**: [GitHub Issues](https://github.com/ShWeaam/krippendorff-alpha-python/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/ShWeaam/krippendorff-alpha-python/discussions)  
 - **📧 Email**: weaam.2511@gmail.com
 - **🌐 Web App**: [krippendorff-alpha.app](https://krippendorff-alpha.app)
 
