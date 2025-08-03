@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krippendorff-alpha"
+version = "1.0.0"
+authors = [
+    {name = "Weaam Shaheen", email = "weaam.2511@gmail.com"},
+]
+description = "Comprehensive implementation of Krippendorff's Alpha for inter-rater reliability"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Sociology",
+    "Topic :: Text Processing :: Linguistic",
+]
+keywords = [
+    "krippendorff", "alpha", "inter-rater", "reliability", "agreement",
+    "statistics", "content-analysis", "research", "data-science"
+]
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8", 
+    "mypy",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+web = [
+    "streamlit>=1.28.0",
+    "plotly>=5.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+]
+all = [
+    "scipy>=1.7.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ShWeaam/krippendorff_alpha_calculator"
+Documentation = "https://github.com/ShWeaam/krippendorff_alpha_calculator#readme"
+Repository = "https://github.com/ShWeaam/krippendorff_alpha_calculator"
+"Bug Tracker" = "https://github.com/ShWeaam/krippendorff_alpha_calculator/issues"
+
+[project.scripts]
+krippendorff-alpha = "krippendorff_alpha.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["krippendorff_alpha*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers"
+testpaths = [
+    "tests",
+]
