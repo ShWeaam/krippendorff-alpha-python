@@ -60,10 +60,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ShWeaam/krippendorff_alpha_calculator"
-Documentation = "https://github.com/ShWeaam/krippendorff_alpha_calculator#readme"
-Repository = "https://github.com/ShWeaam/krippendorff_alpha_calculator"
-"Bug Tracker" = "https://github.com/ShWeaam/krippendorff_alpha_calculator/issues"
+Homepage = "https://github.com/ShWeaam/krippendorff-alpha-python-calculator"
+Documentation = "https://github.com/ShWeaam/krippendorff-alpha-python-calculator#readme"
+Repository = "https://github.com/ShWeaam/krippendorff-alpha-python-calculator"
+"Bug Tracker" = "https://github.com/ShWeaam/krippendorff-alpha-python-calculator/issues"
 
 [project.scripts]
 krippendorff-alpha = "krippendorff_alpha.cli:main"

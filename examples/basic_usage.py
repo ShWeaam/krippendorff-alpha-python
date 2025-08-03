@@ -122,4 +122,4 @@ print()
 
 print("=== All Examples Complete! ===")
 print("For more advanced usage, see the documentation at:")
-print("https://github.com/ShWeaam/krippendorff_alpha_calculator")
+print("https://github.com/ShWeaam/krippendorff-alpha-python-calculator")

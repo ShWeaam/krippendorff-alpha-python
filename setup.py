@@ -21,11 +21,11 @@ setup(
     description="Comprehensive implementation of Krippendorff's Alpha for inter-rater reliability",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/ShWeaam/krippendorff_alpha_calculator",
+    url="https://github.com/ShWeaam/krippendorff-alpha-python-calculator",
     project_urls={
-        "Bug Tracker": "https://github.com/ShWeaam/krippendorff_alpha_calculator/issues",
-        "Documentation": "https://github.com/ShWeaam/krippendorff_alpha_calculator#readme",
-        "Source Code": "https://github.com/ShWeaam/krippendorff_alpha_calculator",
+        "Bug Tracker": "https://github.com/ShWeaam/krippendorff-alpha-python-calculator/issues",
+        "Documentation": "https://github.com/ShWeaam/krippendorff-alpha-python-calculator#readme",
+        "Source Code": "https://github.com/ShWeaam/krippendorff-alpha-python-calculator",
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",

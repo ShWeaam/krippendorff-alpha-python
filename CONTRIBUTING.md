@@ -45,8 +45,8 @@ Feature suggestions are welcome! Please:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ShWeaam/krippendorff_alpha_calculator.git
-cd krippendorff_alpha_calculator
+git clone https://github.com/ShWeaam/krippendorff-alpha-python-calculator.git
+cd krippendorff-alpha-python-calculator
 
 # Create virtual environment
 python -m venv venv

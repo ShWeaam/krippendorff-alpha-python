@@ -569,7 +569,7 @@ def main():
         </p>
         <p style="margin-top: 1rem;">
             Made with ❤️ for the research community | 
-            <a href="https://github.com/ShWeaam/krippendorff_alpha_calculator" target="_blank">GitHub</a> | 
+            <a href="https://github.com/ShWeaam/krippendorff-alpha-python-calculator" target="_blank">GitHub</a> | 
             <a href="mailto:weaam.2511@gmail.com">Contact</a>
         </p>
     </div>
