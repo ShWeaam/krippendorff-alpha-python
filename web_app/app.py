@@ -89,7 +89,7 @@ def main():
             Comprehensive inter-rater reliability analysis following Krippendorff (2019) specifications
         </p>
         <p style="color: #888;">
-            🌍 <strong>Worldwide Access</strong> • 🔒 <strong>Privacy First</strong> • 🎓 <strong>Research Grade</strong>
+            🌍 <strong>Worldwide Access</strong> • 🔒 <strong>Privacy First</strong> • 🎓 <strong>Research Grade</strong> • 🔧 <strong>v2.0 - Fixed!</strong>
         </p>
     </div>
     """, unsafe_allow_html=True)
