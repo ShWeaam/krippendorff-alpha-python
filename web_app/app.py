@@ -108,7 +108,7 @@ def main():
             ["Upload CSV File", "Enter Data Manually", "Use Sample Data"]
         )
         
-        # Measurement scale selection
+        # Measurement scale selection with auto-update
         st.markdown("### 📏 Measurement Scale")
         scale = st.selectbox(
             "Select measurement level:",
@@ -118,7 +118,15 @@ def main():
             - **Ordinal**: Ranked categories (e.g., ratings, education levels)  
             - **Interval**: Equal intervals (e.g., temperature °C, years)
             - **Ratio**: Meaningful zero (e.g., weight, height, counts)
-            """
+            """,
+            key="measurement_scale"
+        )
+        
+        # Auto-calculate toggle
+        auto_calculate = st.checkbox(
+            "🔄 Auto-calculate when settings change", 
+            value=True,
+            help="Automatically recalculate alpha when measurement level or other settings change"
         )
         
         # Bootstrap configuration
@@ -242,7 +250,7 @@ def main():
         
         sample_type = st.selectbox(
             "Choose sample dataset:",
-            ["High Agreement", "Medium Agreement", "Low Agreement", "Custom Sample"]
+            ["Excellent Agreement", "High Agreement", "Medium Agreement", "Low Agreement", "Custom Sample"]
         )
         
         if sample_type == "Custom Sample":
@@ -252,11 +260,12 @@ def main():
             with col2:
                 sample_raters = st.number_input("Raters:", min_value=2, max_value=10, value=4)
             with col3:
-                agreement_level = st.selectbox("Agreement:", ["high", "medium", "low"])
+                agreement_level = st.selectbox("Agreement:", ["excellent", "high", "medium", "low"])
             
             data = create_sample_data(sample_items, sample_raters, agreement_level=agreement_level)
         else:
             agreement_map = {
+                "Excellent Agreement": "excellent",
                 "High Agreement": "high",
                 "Medium Agreement": "medium", 
                 "Low Agreement": "low"
@@ -319,8 +328,19 @@ def main():
         if quality_report['sufficient_items'] < 3:
             st.error("❌ Too few items with sufficient raters (<3). Results may be unreliable.")
     
-    # Analysis section
-    if data is not None and st.button("🚀 Calculate Krippendorff's Alpha", type="primary"):
+    # Analysis section - Auto-calculate or manual button
+    should_calculate = False
+    
+    if data is not None:
+        if auto_calculate:
+            # Auto-calculate when data is available
+            should_calculate = True
+            st.info("🔄 Auto-calculating results based on current settings...")
+        else:
+            # Manual calculation with button
+            should_calculate = st.button("🚀 Calculate Krippendorff's Alpha", type="primary")
+    
+    if should_calculate:
         
         try:
             with st.spinner("Calculating Krippendorff's Alpha..."):
