@@ -164,6 +164,14 @@ def krippendorff_alpha(data: Union[List[List], np.ndarray, pd.DataFrame],
         bootstrap, seed, validate_data
     )
     
+    # Check if bootstrap was actually performed (might be disabled for large datasets)
+    if len(boot_alphas) == 0:
+        logger.warning("Bootstrap confidence intervals not available for very large datasets")
+        if return_items:
+            return alpha_value, item_stats_df  # Return without CI
+        else:
+            return alpha_value  # Return without CI
+    
     # Calculate confidence intervals (with BCa correction when possible)
     ci_low, ci_high = _calculate_confidence_intervals(boot_alphas, alpha_value, ci)
     
@@ -307,7 +315,7 @@ def _create_distance_function(level: str, unique_values: List[Any], counts: List
 
 
 def _calculate_observed_disagreement(arr: np.ndarray, valid_items: List[int], missing_mask: np.ndarray, n_raters: int, delta_func: Any) -> float:
-    """Calculate observed disagreement with correct global normalization"""
+    """Calculate observed disagreement with correct global normalization (no double-counting)"""
     observed_sum = 0.0
     total_pairs = 0
     
@@ -315,38 +323,36 @@ def _calculate_observed_disagreement(arr: np.ndarray, valid_items: List[int], mi
         vals = [arr[i, j] for j in range(n_raters) if not missing_mask[i, j]]
         m = len(vals)
         
-        # Add all pairwise comparisons for this item
+        # Add unique pairwise comparisons for this item (avoid double-counting)
         for a in range(m):
-            for b in range(m):
-                if a != b:
-                    observed_sum += delta_func(vals[a], vals[b])
-                    total_pairs += 1
+            for b in range(a + 1, m):  # Only count each pair once: a < b
+                observed_sum += delta_func(vals[a], vals[b])
+                total_pairs += 1
     
+    # Return average disagreement per pair
     return observed_sum / total_pairs if total_pairs > 0 else 0.0
 
 
 def _calculate_expected_disagreement(unique_values: List[Any], counts: List[int], n_total: int, delta_func: Any, level: str) -> float:
-    """Calculate expected disagreement under independence assumption"""
+    """Calculate expected disagreement under independence assumption (corrected formula)"""
+    if n_total <= 1:
+        return 0.0
+    
     expected_sum = 0.0
     
-    if level == 'ordinal':
-        # Use sorted values for ordinal calculation
-        try:
-            sorted_vals = sorted(unique_values, key=lambda x: float(x))
-        except (ValueError, TypeError):
-            sorted_vals = sorted(unique_values, key=str)
-        
-        freq = {val: cnt for val, cnt in zip(unique_values, counts)}
-        
-        for v in sorted_vals:
-            for v_prime in sorted_vals:
-                if v != v_prime:
-                    expected_sum += (freq[v] * freq[v_prime] / (n_total - 1)) * delta_func(v, v_prime)
-    else:
-        for idx, v in enumerate(unique_values):
-            for jdx, v_prime in enumerate(unique_values):
-                if idx != jdx:
-                    expected_sum += (counts[idx] * counts[jdx] / (n_total - 1)) * delta_func(v, v_prime)
+    # Krippendorff's formula: D_e = Σ Σ (n_c * n_c' / (n_total * (n_total - 1))) * δ(c, c')
+    # But we need to avoid double-counting pairs
+    
+    for i, v in enumerate(unique_values):
+        for j, v_prime in enumerate(unique_values):
+            if i < j:  # Only count each unique pair once (avoid double-counting)
+                # Probability of drawing v then v_prime (or v_prime then v)
+                prob = (counts[i] * counts[j] + counts[j] * counts[i]) / (n_total * (n_total - 1))
+                expected_sum += prob * delta_func(v, v_prime)
+            elif i == j and counts[i] > 1:
+                # Same value: probability of drawing same value twice
+                prob = (counts[i] * (counts[i] - 1)) / (n_total * (n_total - 1))
+                expected_sum += prob * delta_func(v, v_prime)  # δ(v,v) = 0 for most metrics anyway
     
     return expected_sum
 
@@ -406,23 +412,34 @@ def _calculate_item_statistics(arr: np.ndarray, missing_mask: np.ndarray, n_item
 
 def _bootstrap_alpha(arr: np.ndarray, valid_items: List[int], missing_mask: np.ndarray, n_raters: int, level: str, missing: Optional[Union[Any, List[Any]]], 
                      bootstrap_iterations: int, seed: Optional[int], validate_data: bool) -> np.ndarray:
-    """Perform bootstrap resampling with corrected methodology"""
+    """Perform bootstrap resampling with corrected methodology and performance optimization"""
     rng = np.random.RandomState(seed) if seed is not None else np.random.RandomState()
     boot_alphas = []
     
-    # Collect all pairable value pairs with their context
-    value_pairs_data = []
-    for i in valid_items:
-        vals = [arr[i, j] for j in range(n_raters) if not missing_mask[i, j]]
-        m = len(vals)
-        for a in range(m):
-            for b in range(m):
-                if a != b:
-                    value_pairs_data.append((vals[a], vals[b], i, a, b))
+    # Performance optimization: reduce bootstrap iterations for very large datasets
+    n_items = len(valid_items)
+    n_values = np.sum(~missing_mask)
     
-    n_pairs = len(value_pairs_data)
+    if n_values > 20000:  # Very large dataset - disable bootstrap
+        logger.warning(f"Very large dataset detected ({n_values} values). Bootstrap disabled for performance. Use smaller sample for confidence intervals.")
+        return np.array([])  # Return empty array to skip bootstrap
+    elif n_values > 10000:  # Large dataset
+        actual_iterations = min(bootstrap_iterations, 100)
+        logger.info(f"Large dataset detected ({n_values} values). Reducing bootstrap to {actual_iterations} iterations for performance.")
+    elif n_values > 5000:  # Medium dataset  
+        actual_iterations = min(bootstrap_iterations, 300)
+        logger.info(f"Medium dataset detected ({n_values} values). Using {actual_iterations} bootstrap iterations.")
+    else:
+        actual_iterations = bootstrap_iterations
     
-    for iteration in range(bootstrap_iterations):
+    # Progress tracking for long calculations
+    progress_interval = max(1, actual_iterations // 10)  # Report every 10%
+    
+    for iteration in range(actual_iterations):
+        if iteration % progress_interval == 0 and actual_iterations > 50:
+            progress = (iteration / actual_iterations) * 100
+            logger.info(f"Bootstrap progress: {progress:.0f}% ({iteration}/{actual_iterations})")
+        
         try:
             # Resample units (items) with replacement - corrected approach
             sample_items = rng.choice(valid_items, size=len(valid_items), replace=True)

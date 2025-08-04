@@ -159,13 +159,16 @@ def create_sample_data(n_items: int = 10, n_raters: int = 4,
     np.random.seed(42)  # For reproducible examples
     data = []
     
-    # Set agreement parameters
+    # Set agreement parameters for more realistic levels
     if agreement_level == 'high':
-        disagreement_prob = 0.1
+        disagreement_prob = 0.05  # Very high agreement (95% agree)
+        noise_level = 1  # Small deviations
     elif agreement_level == 'medium':
-        disagreement_prob = 0.3
+        disagreement_prob = 0.4   # Medium agreement (60% agree)
+        noise_level = 2  # Moderate deviations
     else:  # low
-        disagreement_prob = 0.6
+        disagreement_prob = 0.8   # Low agreement (20% agree)  
+        noise_level = len(scale_values)  # High deviations
     
     for _ in range(n_items):
         # Choose base value
@@ -174,8 +177,17 @@ def create_sample_data(n_items: int = 10, n_raters: int = 4,
         
         for _ in range(n_raters):
             if np.random.random() < disagreement_prob:
-                # Add disagreement
-                rating = np.random.choice(scale_values)
+                # Add disagreement with controlled noise level
+                if agreement_level == 'low':
+                    # For low agreement, use completely random values
+                    rating = np.random.choice(scale_values)
+                else:
+                    # For medium disagreement, add controlled noise around base value
+                    base_idx = scale_values.index(base_value)
+                    noise_range = min(noise_level, len(scale_values) - 1)
+                    min_idx = max(0, base_idx - noise_range)
+                    max_idx = min(len(scale_values) - 1, base_idx + noise_range)
+                    rating = scale_values[np.random.randint(min_idx, max_idx + 1)]
             else:
                 rating = base_value
             item_ratings.append(rating)

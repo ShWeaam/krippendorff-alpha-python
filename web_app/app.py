@@ -351,17 +351,33 @@ def main():
                 # Calculate alpha
                 result = krippendorff_alpha(**params)
                 
-                # Parse results based on return format
-                if use_bootstrap:
-                    if show_item_stats:
-                        alpha, item_stats, ci_low, ci_high, boot_samples = result
+                # Parse results based on return format (handle variable return types)
+                alpha = None
+                item_stats = None
+                ci_low = None
+                ci_high = None
+                boot_samples = None
+                
+                if isinstance(result, tuple):
+                    if use_bootstrap:
+                        if len(result) == 5:  # Full bootstrap with item stats
+                            alpha, item_stats, ci_low, ci_high, boot_samples = result
+                        elif len(result) == 4:  # Bootstrap without item stats
+                            alpha, ci_low, ci_high, boot_samples = result
+                        elif len(result) == 2:  # Bootstrap disabled, with item stats
+                            alpha, item_stats = result
+                            st.warning("⚠️ Bootstrap confidence intervals disabled for large dataset (>20,000 values)")
+                        else:  # Bootstrap disabled, no item stats
+                            alpha = result[0] if len(result) > 0 else result
+                            st.warning("⚠️ Bootstrap confidence intervals disabled for large dataset (>20,000 values)")
                     else:
-                        alpha, ci_low, ci_high, boot_samples = result
+                        if len(result) == 2:  # No bootstrap, with item stats
+                            alpha, item_stats = result
+                        else:
+                            alpha = result[0] if len(result) > 0 else result
                 else:
-                    if show_item_stats:
-                        alpha, item_stats = result
-                    else:
-                        alpha = result
+                    # Single value return
+                    alpha = result
                 
                 # Display results
                 st.markdown('<h2 class="sub-header">📈 Results</h2>', unsafe_allow_html=True)
@@ -378,7 +394,7 @@ def main():
                         help=f"Measurement scale: {scale.capitalize()}"
                     )
                 
-                if use_bootstrap:
+                if use_bootstrap and ci_low is not None and ci_high is not None:
                     with col2:
                         st.metric(
                             f"{confidence_level*100:.0f}% CI Lower",
@@ -392,6 +408,13 @@ def main():
                             f"{ci_high:.4f}",
                             help="Upper bound of confidence interval"
                         )
+                elif use_bootstrap:
+                    with col2:
+                        st.metric(
+                            "Confidence Intervals",
+                            "Not Available",
+                            help="Disabled for large datasets to improve performance"
+                        )
                 
                 # Reliability interpretation
                 color_map = {'green': '🟢', 'orange': '🟡', 'red': '🔴'}
@@ -404,7 +427,7 @@ def main():
                 """, unsafe_allow_html=True)
                 
                 # Bootstrap visualization
-                if use_bootstrap:
+                if use_bootstrap and boot_samples is not None and len(boot_samples) > 0:
                     st.markdown('<h3 class="sub-header">📊 Bootstrap Distribution</h3>', unsafe_allow_html=True)
                     
                     fig = go.Figure()
@@ -484,12 +507,19 @@ def main():
                     'data_shape': f"{len(data)} items × {len(data[0])} raters"
                 }
                 
-                if use_bootstrap:
+                if use_bootstrap and ci_low is not None and ci_high is not None:
                     export_data.update({
                         'bootstrap_iterations': bootstrap_iterations,
                         'confidence_level': confidence_level,
                         'ci_lower': float(ci_low),
                         'ci_upper': float(ci_high)
+                    })
+                elif use_bootstrap:
+                    export_data.update({
+                        'bootstrap_iterations': 'disabled_for_large_dataset',
+                        'confidence_level': confidence_level,
+                        'ci_lower': None,
+                        'ci_upper': None
                     })
                 
                 if show_item_stats and 'item_stats' in locals():
@@ -529,10 +559,15 @@ def main():
                         f"Krippendorff's Alpha: {alpha:.4f}",
                     ]
                     
-                    if use_bootstrap:
+                    if use_bootstrap and ci_low is not None and ci_high is not None:
                         report_lines.extend([
                             f"{confidence_level*100:.0f}% Confidence Interval: [{ci_low:.4f}, {ci_high:.4f}]",
                             f"Bootstrap Iterations: {bootstrap_iterations}",
+                        ])
+                    elif use_bootstrap:
+                        report_lines.extend([
+                            f"Bootstrap: Disabled for large dataset (>20,000 values)",
+                            f"Confidence Intervals: Not available",
                         ])
                     
                     report_lines.extend([
