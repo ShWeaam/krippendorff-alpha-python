@@ -5,7 +5,7 @@ Utility functions for Krippendorff's Alpha package.
 import pandas as pd
 import numpy as np
 import json
-from typing import List, Union, Dict, Any
+from typing import List, Union, Dict, Any, Optional
 from pathlib import Path
 
 def load_csv(file_path: str, separator: str = 'auto') -> List[List[Union[int, str]]]:
@@ -90,8 +90,8 @@ def save_results(results: Dict[str, Any], file_path: str, format: str = 'json') 
     else:
         raise ValueError(f"Unsupported format: {format}")
 
-def format_results(alpha: float, ci_low: float = None, ci_high: float = None, 
-                  level: str = None, items: int = None, raters: int = None) -> str:
+def format_results(alpha: float, ci_low: Optional[float] = None, ci_high: Optional[float] = None, 
+                  level: Optional[str] = None, items: Optional[int] = None, raters: Optional[int] = None) -> str:
     """
     Format Krippendorff Alpha results for display.
     
@@ -135,7 +135,7 @@ def format_results(alpha: float, ci_low: float = None, ci_high: float = None,
     return "\n".join(result_lines)
 
 def create_sample_data(n_items: int = 10, n_raters: int = 4, 
-                      scale_values: List[int] = None, 
+                      scale_values: Optional[List[int]] = None, 
                       agreement_level: str = 'medium') -> List[List[int]]:
     """
     Create sample data for testing and demonstration.

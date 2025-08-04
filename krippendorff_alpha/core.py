@@ -1,15 +1,21 @@
 import numpy as np
 import pandas as pd
 import warnings
-from typing import Union, List, Tuple, Optional, Any
+from typing import Union, List, Tuple, Optional, Any, Dict
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def krippendorff_alpha(data, level=None, missing=None, return_items=False,
-                       bootstrap=None, seed=None, ci=0.95, validate_data=True):
+def krippendorff_alpha(data: Union[List[List], np.ndarray, pd.DataFrame], 
+                       level: Optional[str] = None, 
+                       missing: Optional[Union[Any, List[Any]]] = None, 
+                       return_items: bool = False,
+                       bootstrap: Optional[int] = None, 
+                       seed: Optional[int] = None, 
+                       ci: float = 0.95, 
+                       validate_data: bool = True) -> Union[float, Tuple[float, ...]]:
     """
     Compute Krippendorff's alpha for inter-rater reliability with all theoretical corrections.
 
@@ -169,7 +175,7 @@ def krippendorff_alpha(data, level=None, missing=None, return_items=False,
         return alpha_value, ci_low, ci_high, boot_alphas
 
 
-def _identify_missing_values(arr, missing):
+def _identify_missing_values(arr: np.ndarray, missing: Optional[Union[Any, List[Any]]]) -> np.ndarray:
     """Identify missing entries in the data matrix"""
     if missing is None:
         missing_mask = pd.isna(arr)
@@ -182,7 +188,7 @@ def _identify_missing_values(arr, missing):
     return missing_mask
 
 
-def _collect_pairable_values(arr, missing_mask, n_items, n_raters):
+def _collect_pairable_values(arr: np.ndarray, missing_mask: np.ndarray, n_items: int, n_raters: int) -> List[Any]:
     """Collect all values in items that have at least 2 valid ratings"""
     values_list = []
     valid_items = []
@@ -196,7 +202,7 @@ def _collect_pairable_values(arr, missing_mask, n_items, n_raters):
     return values_list, valid_items
 
 
-def _validate_data_for_scale(values_list, level):
+def _validate_data_for_scale(values_list: List[Any], level: str) -> None:
     """Validate data appropriateness for the specified measurement scale"""
     if level == 'ratio':
         # Ratio scale requires non-negative values
@@ -223,7 +229,7 @@ def _validate_data_for_scale(values_list, level):
                 raise ValueError(f"{level.capitalize()} scale requires numeric data")
 
 
-def _create_distance_function(level, unique_values, counts, n_total):
+def _create_distance_function(level: str, unique_values: List[Any], counts: List[int], n_total: int) -> Any:
     """Create the appropriate distance function for the measurement level"""
     
     if level == 'nominal':
@@ -300,7 +306,7 @@ def _create_distance_function(level, unique_values, counts, n_total):
     return delta
 
 
-def _calculate_observed_disagreement(arr, valid_items, missing_mask, n_raters, delta_func):
+def _calculate_observed_disagreement(arr: np.ndarray, valid_items: List[int], missing_mask: np.ndarray, n_raters: int, delta_func: Any) -> float:
     """Calculate observed disagreement with correct global normalization"""
     observed_sum = 0.0
     total_pairs = 0
@@ -319,7 +325,7 @@ def _calculate_observed_disagreement(arr, valid_items, missing_mask, n_raters, d
     return observed_sum / total_pairs if total_pairs > 0 else 0.0
 
 
-def _calculate_expected_disagreement(unique_values, counts, n_total, delta_func, level):
+def _calculate_expected_disagreement(unique_values: List[Any], counts: List[int], n_total: int, delta_func: Any, level: str) -> float:
     """Calculate expected disagreement under independence assumption"""
     expected_sum = 0.0
     
@@ -345,7 +351,7 @@ def _calculate_expected_disagreement(unique_values, counts, n_total, delta_func,
     return expected_sum
 
 
-def _calculate_item_statistics(arr, missing_mask, n_items, n_raters, item_labels):
+def _calculate_item_statistics(arr: np.ndarray, missing_mask: np.ndarray, n_items: int, n_raters: int, item_labels: List[str]) -> pd.DataFrame:
     """Calculate per-item disagreement statistics"""
     stats = {
         'num_ratings': [], 
@@ -398,8 +404,8 @@ def _calculate_item_statistics(arr, missing_mask, n_items, n_raters, item_labels
     return pd.DataFrame(stats, index=index_labels)
 
 
-def _bootstrap_alpha(arr, valid_items, missing_mask, n_raters, level, missing, 
-                     bootstrap_iterations, seed, validate_data):
+def _bootstrap_alpha(arr: np.ndarray, valid_items: List[int], missing_mask: np.ndarray, n_raters: int, level: str, missing: Optional[Union[Any, List[Any]]], 
+                     bootstrap_iterations: int, seed: Optional[int], validate_data: bool) -> np.ndarray:
     """Perform bootstrap resampling with corrected methodology"""
     rng = np.random.RandomState(seed) if seed is not None else np.random.RandomState()
     boot_alphas = []
@@ -447,7 +453,7 @@ def _bootstrap_alpha(arr, valid_items, missing_mask, n_raters, level, missing,
     return np.array(boot_alphas)
 
 
-def _calculate_confidence_intervals(boot_alphas, alpha_value, ci):
+def _calculate_confidence_intervals(boot_alphas: np.ndarray, alpha_value: float, ci: float) -> Tuple[float, float]:
     """Calculate confidence intervals with bias-corrected approach when possible"""
     if len(boot_alphas) == 0:
         return np.nan, np.nan
@@ -503,7 +509,7 @@ def _calculate_confidence_intervals(boot_alphas, alpha_value, ci):
     return ci_low, ci_high
 
 
-def interactive_krippendorff_alpha():
+def interactive_krippendorff_alpha() -> Dict[str, Any]:
     """Interactive function to guide users through Krippendorff Alpha calculation"""
     print("=== Krippendorff's Alpha Calculator ===")
     print("\nThis calculator computes inter-rater reliability using Krippendorff's Alpha coefficient.")

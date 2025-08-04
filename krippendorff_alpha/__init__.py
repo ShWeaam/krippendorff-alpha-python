@@ -21,8 +21,8 @@ Example:
 """
 
 __version__ = "1.0.0"
-__author__ = "Wild Boars Research Team"
-__email__ = "research@wildboars.org"
+__author__ = "Weaam Shaheen"
+__email__ = "weaam.2511@gmail.com"
 __license__ = "MIT"
 
 # Import main functions
@@ -30,15 +30,11 @@ from .core import krippendorff_alpha, interactive_krippendorff_alpha
 from .validators import validate_data, validate_scale
 from .utils import load_csv, save_results
 
-# Import result classes
-from .core import KAlphaResult
-
 __all__ = [
     'krippendorff_alpha',
     'interactive_krippendorff_alpha', 
     'validate_data',
     'validate_scale',
     'load_csv',
-    'save_results',
-    'KAlphaResult'
+    'save_results'
 ]
