@@ -274,7 +274,7 @@ def _create_distance_function(level: str, unique_values: List[Any], counts: List
                 return 0.0 if v == v_prime else 1.0  # Fallback to nominal
     
     elif level == 'ordinal':
-        # Corrected ordinal implementation using cumulative probabilities
+        # CORRECT ordinal implementation following Krippendorff (2019) specification
         freq = {val: cnt for val, cnt in zip(unique_values, counts)}
         
         # Sort values in ascending order
@@ -282,9 +282,6 @@ def _create_distance_function(level: str, unique_values: List[Any], counts: List
             sorted_vals = sorted(unique_values, key=lambda x: float(x))
         except (ValueError, TypeError):
             sorted_vals = sorted(unique_values, key=str)
-        
-        # Calculate marginal probabilities
-        prob = {val: freq[val] / n_total for val in sorted_vals}
         
         def delta(v, v_prime):
             if v == v_prime:
@@ -296,15 +293,22 @@ def _create_distance_function(level: str, unique_values: List[Any], counts: List
             except ValueError:
                 return 0.0
             
-            # Ensure i < j for consistent calculation
+            # Ensure i <= j for consistent calculation
             if i > j:
                 i, j = j, i
             
-            # Krippendorff's ordinal distance: sum of squared probabilities between ranks
-            distance = 0.0
-            for k in range(i + 1, j + 1):
-                if k < len(sorted_vals):
-                    distance += prob[sorted_vals[k]] ** 2
+            # Krippendorff's CORRECT ordinal distance formula:
+            # δ(v,v') = ([∑(g=v to v') n_g] - (n_v + n_v')/2)²
+            
+            # Calculate cumulative frequency sum from i to j (inclusive)
+            cumulative_sum = sum(freq[sorted_vals[k]] for k in range(i, j + 1))
+            
+            # Get frequencies of the two values being compared
+            n_v = freq[v]
+            n_v_prime = freq[v_prime]
+            
+            # Apply the correct Krippendorff ordinal distance formula
+            distance = (cumulative_sum - (n_v + n_v_prime) / 2.0) ** 2
             
             return distance
     
