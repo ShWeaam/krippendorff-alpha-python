@@ -334,25 +334,25 @@ def _calculate_observed_disagreement(arr: np.ndarray, valid_items: List[int], mi
 
 
 def _calculate_expected_disagreement(unique_values: List[Any], counts: List[int], n_total: int, delta_func: Any, level: str) -> float:
-    """Calculate expected disagreement under independence assumption (corrected formula)"""
+    """Calculate expected disagreement under independence assumption - CORRECT Krippendorff formula"""
     if n_total <= 1:
         return 0.0
     
     expected_sum = 0.0
     
-    # Krippendorff's formula: D_e = Σ Σ (n_c * n_c' / (n_total * (n_total - 1))) * δ(c, c')
-    # But we need to avoid double-counting pairs
+    # Krippendorff's EXACT formula: D_e = Σ_c Σ_c' (n_c * n_c' / (n_total * (n_total - 1))) * δ(c, c')
+    # where c ≠ c' (different values), and same-value pairs use (n_c * (n_c - 1))
     
     for i, v in enumerate(unique_values):
         for j, v_prime in enumerate(unique_values):
-            if i < j:  # Only count each unique pair once (avoid double-counting)
-                # Probability of drawing v then v_prime (or v_prime then v)
-                prob = (counts[i] * counts[j] + counts[j] * counts[i]) / (n_total * (n_total - 1))
+            if i != j:  # Different values
+                # Standard case: count all pairs between different values
+                prob = (counts[i] * counts[j]) / (n_total * (n_total - 1))
                 expected_sum += prob * delta_func(v, v_prime)
-            elif i == j and counts[i] > 1:
-                # Same value: probability of drawing same value twice
+            elif i == j and counts[i] > 1:  # Same value with multiple instances
+                # Special case: pairs within the same value
                 prob = (counts[i] * (counts[i] - 1)) / (n_total * (n_total - 1))
-                expected_sum += prob * delta_func(v, v_prime)  # δ(v,v) = 0 for most metrics anyway
+                expected_sum += prob * delta_func(v, v_prime)  # Usually δ(v,v) = 0
     
     return expected_sum
 

@@ -138,7 +138,7 @@ def create_sample_data(n_items: int = 10, n_raters: int = 4,
                       scale_values: Optional[List[int]] = None, 
                       agreement_level: str = 'medium') -> List[List[int]]:
     """
-    Create sample data for testing and demonstration.
+    Create sample data for testing and demonstration with realistic reliability patterns.
     
     Args:
         n_items: Number of items
@@ -159,37 +159,47 @@ def create_sample_data(n_items: int = 10, n_raters: int = 4,
     np.random.seed(42)  # For reproducible examples
     data = []
     
-    # Set agreement parameters for more realistic levels
+    # Create more realistic agreement patterns based on research literature
     if agreement_level == 'high':
-        disagreement_prob = 0.05  # Very high agreement (95% agree)
-        noise_level = 1  # Small deviations
+        # Target: α ≈ 0.80-0.95 (acceptable reliability)
+        agreement_strength = 0.9  # 90% perfect agreement
+        systematic_bias = 0.05    # 5% systematic disagreement (±1 scale point)
+        random_error = 0.05       # 5% random error
     elif agreement_level == 'medium':
-        disagreement_prob = 0.4   # Medium agreement (60% agree)
-        noise_level = 2  # Moderate deviations
+        # Target: α ≈ 0.50-0.70 (marginal reliability)
+        agreement_strength = 0.6  # 60% perfect agreement
+        systematic_bias = 0.2     # 20% systematic disagreement 
+        random_error = 0.2        # 20% random error
     else:  # low
-        disagreement_prob = 0.8   # Low agreement (20% agree)  
-        noise_level = len(scale_values)  # High deviations
+        # Target: α ≈ 0.10-0.40 (poor reliability)
+        agreement_strength = 0.3  # 30% perfect agreement
+        systematic_bias = 0.3     # 30% systematic disagreement
+        random_error = 0.4        # 40% random error (nearly random)
     
-    for _ in range(n_items):
-        # Choose base value
-        base_value = np.random.choice(scale_values)
+    for item_idx in range(n_items):
+        # Choose a "true" value for this item
+        true_value = np.random.choice(scale_values)
         item_ratings = []
         
-        for _ in range(n_raters):
-            if np.random.random() < disagreement_prob:
-                # Add disagreement with controlled noise level
-                if agreement_level == 'low':
-                    # For low agreement, use completely random values
-                    rating = np.random.choice(scale_values)
-                else:
-                    # For medium disagreement, add controlled noise around base value
-                    base_idx = scale_values.index(base_value)
-                    noise_range = min(noise_level, len(scale_values) - 1)
-                    min_idx = max(0, base_idx - noise_range)
-                    max_idx = min(len(scale_values) - 1, base_idx + noise_range)
-                    rating = scale_values[np.random.randint(min_idx, max_idx + 1)]
+        for rater_idx in range(n_raters):
+            rand = np.random.random()
+            
+            if rand < agreement_strength:
+                # Perfect agreement - use true value
+                rating = true_value
+            elif rand < agreement_strength + systematic_bias:
+                # Systematic bias - consistent shift (simulate rater bias)
+                bias_direction = 1 if rater_idx % 2 == 0 else -1  # Alternating bias
+                bias_magnitude = 1 if agreement_level != 'low' else np.random.randint(1, 3)
+                
+                true_idx = scale_values.index(true_value)
+                biased_idx = true_idx + (bias_direction * bias_magnitude)
+                biased_idx = max(0, min(len(scale_values) - 1, biased_idx))
+                rating = scale_values[biased_idx]
             else:
-                rating = base_value
+                # Random error - completely random rating
+                rating = np.random.choice(scale_values)
+            
             item_ratings.append(rating)
         
         data.append(item_ratings)
