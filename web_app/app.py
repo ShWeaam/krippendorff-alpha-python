@@ -89,7 +89,7 @@ def main():
             Comprehensive inter-rater reliability analysis following Krippendorff (2019) specifications
         </p>
         <p style="color: #888;">
-            🌍 <strong>Worldwide Access</strong> • 🔒 <strong>Privacy First</strong> • 🎓 <strong>Research Grade</strong> • 🔧 <strong>v2.0 - Fixed!</strong>
+            🌍 <strong>Worldwide Access</strong> • 🎓 <strong>Research Grade</strong>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -174,11 +174,33 @@ def main():
     if input_method == "Upload CSV File":
         st.markdown('<h2 class="sub-header">📁 Data Upload</h2>', unsafe_allow_html=True)
         
+        # Expected data format information
+        st.info("""
+        **📋 Expected Data Format:**
+        - **Items as rows**, **raters as columns**
+        - **Pure data matrix** (no headers, no case IDs)
+        - **Missing values**: Use blank cells, 'NA', or custom indicators
+        - **Example**: 4 items × 3 raters → 4 rows × 3 columns of ratings
+        """)
+        
         uploaded_file = st.file_uploader(
             "Choose a CSV file",
             type="csv",
-            help="Upload your reliability data with items as rows and raters as columns"
+            help="Upload your reliability data following the format above"
         )
+        
+        # Data format options
+        col1, col2 = st.columns(2)
+        with col1:
+            skip_first_column = st.checkbox(
+                "📝 First column contains case identifiers",
+                help="Check this if your CSV has case IDs in the first column (will be ignored)"
+            )
+        with col2:
+            skip_first_row = st.checkbox(
+                "📋 First row contains headers",
+                help="Check this if your CSV has column headers in the first row (will be ignored)"
+            )
         
         if uploaded_file is not None:
             try:
@@ -193,19 +215,44 @@ def main():
                 else:
                     separator = ','
                 
-                df = pd.read_csv(uploaded_file, sep=separator, header=None)
+                # Load CSV with optional header
+                header_row = 0 if skip_first_row else None
+                df = pd.read_csv(uploaded_file, sep=separator, header=header_row)
+                
+                # Remove first column if it contains case identifiers
+                if skip_first_column:
+                    df = df.iloc[:, 1:]  # Skip first column
+                
+                # Convert to data matrix
                 data = df.values.tolist()
                 
-                st.success(f"✅ Data loaded successfully! ({len(data)} items × {len(data[0])} raters)")
+                # Calculate dimensions
+                n_items = len(data)
+                n_raters = len(data[0]) if data else 0
+                
+                st.success(f"✅ Data loaded successfully! ({n_items} items × {n_raters} raters)")
+                
+                if skip_first_column or skip_first_row:
+                    adjustments = []
+                    if skip_first_row:
+                        adjustments.append("skipped header row")
+                    if skip_first_column:
+                        adjustments.append("skipped first column (case IDs)")
+                    st.info(f"🔧 Data adjustments: {', '.join(adjustments)}")
                 
                 # Show preview
                 with st.expander("👀 Data Preview"):
-                    st.dataframe(df.head(10))
-                    if len(df) > 10:
-                        st.info(f"Showing first 10 rows of {len(df)} total rows")
+                    preview_df = pd.DataFrame(
+                        data[:10] if len(data) > 10 else data,
+                        columns=[f"Rater_{i+1}" for i in range(n_raters)]
+                    )
+                    st.dataframe(preview_df)
+                    if len(data) > 10:
+                        st.info(f"Showing first 10 rows of {len(data)} total rows")
                 
             except Exception as e:
                 st.error(f"❌ Error loading file: {str(e)}")
+                st.info("💡 Please check your file format and try adjusting the checkboxes above.")
     
     elif input_method == "Enter Data Manually":
         st.markdown('<h2 class="sub-header">✏️ Manual Data Entry</h2>', unsafe_allow_html=True)
@@ -615,9 +662,6 @@ def main():
     <div style="text-align: center; color: #666; margin-top: 2rem;">
         <p>
             📚 <strong>Theoretical Foundation:</strong> Krippendorff, K. (2019). Content Analysis: An Introduction to Its Methodology (4th ed.)
-        </p>
-        <p>
-            🔬 <strong>Implementation:</strong> Theoretically validated with 92% test success rate
         </p>
         <p>
             🌍 <strong>Global Access:</strong> Free for research and educational use worldwide
