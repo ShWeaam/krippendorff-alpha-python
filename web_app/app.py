@@ -75,7 +75,95 @@ st.markdown("""
         border-radius: 0.5rem;
         border-left: 5px solid #dc3545;
     }
+    
+    /* File uploader drag and drop enhancement */
+    .uploadedFile {
+        position: relative;
+    }
+    
+    /* Reduce processing spinner duration */
+    .stSpinner > div {
+        animation-duration: 0.3s !important;
+    }
+    
+    /* Custom drag overlay for file upload */
+    [data-testid="stFileUploader"] {
+        transition: all 0.3s ease;
+    }
+    
+    [data-testid="stFileUploader"]:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 20px rgba(31, 119, 180, 0.2);
+        border: 2px dashed #1f77b4 !important;
+    }
+    
+    /* Minimize processing overlay duration */
+    .stAlert {
+        animation-duration: 0.2s !important;
+    }
+    
+    /* Speed up download processing visual feedback */
+    .stDownloadButton > button {
+        transition: all 0.1s ease !important;
+    }
+    
+    /* Reduce Streamlit's default processing overlay */
+    .stApp > .main .block-container {
+        transition: opacity 0.1s ease !important;
+    }
+    
+    /* Faster fade-in for success messages */
+    .stSuccess {
+        animation: fadeIn 0.2s ease-in !important;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 </style>
+
+<script>
+// Enhanced drag and drop with blur effect
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploader = document.querySelector('[data-testid="stFileUploader"]');
+    if (fileUploader) {
+        fileUploader.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            document.body.classList.add('drag-active');
+            // Blur everything except the file uploader
+            const mainContent = document.querySelector('.main');
+            if (mainContent) {
+                mainContent.style.filter = 'blur(3px)';
+                mainContent.style.transition = 'filter 0.3s ease';
+            }
+            this.style.filter = 'none';
+            this.style.zIndex = '9999';
+            this.style.position = 'relative';
+        });
+        
+        fileUploader.addEventListener('dragleave', function(e) {
+            if (!this.contains(e.relatedTarget)) {
+                document.body.classList.remove('drag-active');
+                const mainContent = document.querySelector('.main');
+                if (mainContent) {
+                    mainContent.style.filter = 'none';
+                }
+                this.style.zIndex = 'auto';
+            }
+        });
+        
+        fileUploader.addEventListener('drop', function(e) {
+            document.body.classList.remove('drag-active');
+            const mainContent = document.querySelector('.main');
+            if (mainContent) {
+                mainContent.style.filter = 'none';
+            }
+            this.style.zIndex = 'auto';
+        });
+    }
+});
+</script>
 """, unsafe_allow_html=True)
 
 def main():
@@ -89,7 +177,7 @@ def main():
             Comprehensive inter-rater reliability analysis following Krippendorff (2019) specifications
         </p>
         <p style="color: #888;">
-            🌍 <strong>Worldwide Access</strong> • 🎓 <strong>Research Grade</strong>
+            🎓 <strong>Research Grade</strong>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -178,29 +266,29 @@ def main():
         st.info("""
         **📋 Expected Data Format:**
         - **Items as rows**, **raters as columns**
-        - **Pure data matrix** (no headers, no case IDs)
+        - **Preferably pure data matrix** (no headers, no case IDs)
         - **Missing values**: Use blank cells, 'NA', or custom indicators
         - **Example**: 4 items × 3 raters → 4 rows × 3 columns of ratings
+        
+        💡 *If your data contains headers or case IDs, check the relevant checkbox below*
         """)
+        
+        # Data format options (moved above file uploader and stacked vertically)
+        skip_first_row = st.checkbox(
+            "📋 First row contains headers",
+            help="Check this if your CSV has column headers in the first row (will be ignored)"
+        )
+        
+        skip_first_column = st.checkbox(
+            "📝 First column contains case identifiers",
+            help="Check this if your CSV has case IDs in the first column (will be ignored)"
+        )
         
         uploaded_file = st.file_uploader(
             "Choose a CSV file",
             type="csv",
             help="Upload your reliability data following the format above"
         )
-        
-        # Data format options
-        col1, col2 = st.columns(2)
-        with col1:
-            skip_first_column = st.checkbox(
-                "📝 First column contains case identifiers",
-                help="Check this if your CSV has case IDs in the first column (will be ignored)"
-            )
-        with col2:
-            skip_first_row = st.checkbox(
-                "📋 First row contains headers",
-                help="Check this if your CSV has column headers in the first row (will be ignored)"
-            )
         
         if uploaded_file is not None:
             try:
@@ -596,23 +684,27 @@ def main():
                 
                 with col1:
                     json_str = json.dumps(export_data, indent=2)
-                    st.download_button(
+                    if st.download_button(
                         "📄 Download JSON",
                         data=json_str,
                         file_name=f"krippendorff_alpha_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                        mime="application/json"
-                    )
+                        mime="application/json",
+                        key="download_json"
+                    ):
+                        st.success("✅ JSON file ready for download!", icon="📄")
                 
                 with col2:
                     if show_item_stats and 'item_stats' in locals():
                         csv_buffer = io.StringIO()
                         item_stats.to_csv(csv_buffer, index=True)
-                        st.download_button(
+                        if st.download_button(
                             "📊 Download CSV",
                             data=csv_buffer.getvalue(),
                             file_name=f"item_statistics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                            mime="text/csv"
-                        )
+                            mime="text/csv",
+                            key="download_csv"
+                        ):
+                            st.success("✅ CSV file ready for download!", icon="📊")
                 
                 with col3:
                     # Format text report
@@ -645,12 +737,14 @@ def main():
                     ])
                     
                     report_text = "\n".join(report_lines)
-                    st.download_button(
+                    if st.download_button(
                         "📝 Download Report",
                         data=report_text,
                         file_name=f"alpha_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain"
-                    )
+                        mime="text/plain",
+                        key="download_report"
+                    ):
+                        st.success("✅ Report file ready for download!", icon="📝")
         
         except Exception as e:
             st.error(f"❌ Error during calculation: {str(e)}")
